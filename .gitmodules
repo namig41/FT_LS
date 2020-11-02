@@ -1,3 +1,3 @@
 [submodule "libft"]
 	path = libft
-	url = gh:namig41/libft
+	url = https://github.com/namig41/libft.git
