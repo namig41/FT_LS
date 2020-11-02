@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ft_ls.h                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: jbloodax <marvin@42.fr>                    +#+  +:+       +#+        */
+/*   By: angavrel <angavrel@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2020/08/03 13:42:11 by jbloodax          #+#    #+#             */
-/*   Updated: 2020/08/03 13:42:44 by jbloodax         ###   ########.fr       */
+/*   Created: 2017/02/22 04:09:21 by angavrel          #+#    #+#             */
+/*   Updated: 2017/02/22 06:39:44 by angavrel         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,39 +15,57 @@
 
 # include "libft.h"
 
+/*
+** ioctl is to get the terminal width
+** time.h to get the date
+*/
+
 # include <dirent.h>
 # include <sys/stat.h>
 # include <pwd.h>
 # include <grp.h>
+# include <uuid/uuid.h>
 # include <time.h>
 # include <sys/types.h>
 # include <sys/xattr.h>
 # include <limits.h>
 # include <sys/ioctl.h>
 
-# define LS_A	(1 << 0) // выдавать все файлы в каталогах, включая скрытые файлы, начинающиеся с точки.
-# define LS_L	(1 << 1) // выдавать один файл на строку
-# define LS_RR	(1 << 2) // рекурсивно выдавать список содержимого всех каталогов
-# define LS_R	(1 << 3) // сортировать содержимое каталога в обратном порядке
-# define LS_T	(1 << 4) // сортировать по времени последней модификации (поле `mtime' в inode)
-# define LS_D	(1 << 5) // выдавать имена каталогов, как будто они обычные файлы, вместо того, чтобы показывать их содержимое
-# define LS_G	(1 << 6) // не отображать информацию о группе в длинном формате вывода
-# define LS_ONE (1 << 7) // выдавать один файл на строку
-# define LS_SS	(1 << 8) // производить сортировку по размеру файла, вместо сортировки по алфавиту
-# define LS_S	(1 << 9) // выдавать размер каждого файла в блоках по 1024 байта слева от имени файла
+enum	{ERRNO, USAGE, MALL_ERR};
 
-# define LS_FLAGS "alRrtdG1Ss"
+/*
+** -a (LS_A) to display hidden files, current folder and previous folder,
+** -l (LS_L) to get more details, -d to display current folder only,
+** -R (LS_RR) recursively list subfolders encountered,
+** -r (LS_R) reverse the order of the sort to get reverse ASCII order or the
+** oldest entries first (or largest files last, if combined with sort by size
+** -t (LS_T) to display by time creation
+** -c (LS_C) to color folders
+** -1 (LS_ONE) to display results on one column,
+*/
+
+# define LS_A	1
+# define LS_L	2
+# define LS_RR	4
+# define LS_R	8
+# define LS_T	16
+# define LS_D	32
+# define LS_G	64
+# define LS_ONE 128
+# define LS_SS	256
+# define LS_S	512
 
 typedef struct stat		t_stat;
-typedef struct dirent 	t_dirent;
+typedef struct dirent	t_dirent;
+typedef struct passwd	t_passwd;
+typedef struct group	t_group;
+typedef unsigned char 				t_bool;
 
-typedef enum 			e_sort
+typedef struct			s_index
 {
-	SORT_ASCII, 
-	SORT_TIME, 
-	SORT_SIZE, 
-	SORT_REVERSE
-}						t_sort;
+	int					y;
+	int					x;
+}						t_index;
 
 typedef struct			s_file
 {
@@ -63,34 +81,70 @@ typedef struct			s_file
 	char				*name;
 	char				full_path[PATH_MAX];
 	struct s_file		*next;
+	t_list				list;
 }						t_file;
 
-t_ui 					g_f;
+/*
+** parsing flags
+*/
 
+int						parsing(int ac, char **av, int *flags);
+int						parse_options(char *s, int *flags);
+int						ls_error(char *s, int error);
 
-/* ------------------------ PARSE -----------------------------------*/
+/*
+** displaying files
+*/
 
-void 	parse_flags(int *argc, char **argv[]);
-void 	parse_files(int argc, char *argv[], t_file **files);
+t_file					*init_files_list(char **av, int ac, int first);
+void					only_files(t_file **begin);
+int						add_new_file(char path[PATH_MAX], char *name,
+							t_file **begin);
 
-/* ------------------------ ERROR ------------------------------------*/
+/*
+** -R flag
+*/
 
-/* ------------------------ SORT -------------------------------------*/
+int						display_all(t_file *begin, int flags,
+							t_bool recursive, int no_files);
 
-void 	sort_switch(t_file **files);
-void 	sort_time(t_file **files);
-void 	sort_ascii(t_file **files);
-void 	sort_size(t_file **files);
-void 	sort_reverse(t_file **files);
+/*
+** sort list by ascii order, -r to reverse and -t flags
+*/
 
-/* ------------------------ PRINT -------------------------------------*/
+int						sort_list(t_file**begin, short flags);
+t_file					*ft_reverse_lst(t_file *lst);
 
-void 	print_files(t_file *files);
+/*
+** display list
+*/
 
-/* ------------------------ LIST --------------------------------------*/
+int						display_list(t_file **begin, int options);
 
-t_file 	*create_file(char *name, char *full_path, t_stat *stat);
-void 	init_files(char *name, t_file **files);
-void 	append_file(t_file **files, t_file *file);
+/*
+**  print list with -l flag
+*/
+
+int						display_detailed_list(t_file *begin, int flags);
+int						get_row_size(t_file *begin, int size[6], int *total);
+int						display_list_items(t_file *file,
+							int size[5], int flags);
+
+/*
+** display name with -c color flag
+*/
+
+void					display_name(t_file *l, int flags, int blocks_len);
+
+/*
+** misc.c file functions
+*/
+
+t_file					*lst_swap(t_file *p1, t_file *p2);
+int						lst_maxlen(t_file *lst);
+int						free_list_content(t_file **lst);
+int						integer_len(int n);
+int						ft_sort_tab(char **tab, int size,
+							int (*f)(const char*, const char*));
 
 #endif

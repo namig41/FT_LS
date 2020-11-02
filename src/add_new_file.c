@@ -1,58 +1,89 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   add_new_file.c                                     :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: angavrel <angavrel@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2017/02/19 17:05:57 by angavrel          #+#    #+#             */
+/*   Updated: 2017/02/22 03:47:11 by angavrel         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "ft_ls.h"
 
-t_file 	*create_file(char *name, char *full_path, t_stat *stat)
-{
-    t_file *node;
+/*
+** stores file full path data
+*/
 
-    if (!(node = (t_file *)ft_memalloc(sizeof(t_file))))
-        return (NULL);
-    node->name = ft_strdup(name);
-    node->mode = stat->st_mode;
-    node->size = stat->st_size;
-    node->st_blocks = stat->st_blocks;
-    node->st_gid = stat->st_gid;
-    node->st_uid = stat->st_uid;
-    node->st_rdev = stat->st_rdev;
-    node->st_nlink = stat->st_nlink;
-    node->time = stat->st_mtime;
-    node->next = NULL;
-    return (node);
+static int		get_full_path(char path[PATH_MAX], char *name,
+								char full_path[PATH_MAX])
+{
+	int	i;
+
+	i = -1;
+	while (path[++i])
+		full_path[i] = path[i];
+	if (i && i < PATH_MAX)
+		if (!(path[0] == '/' && path[1] == '\0'))
+			full_path[i++] = '/';
+	while (*name && i < PATH_MAX)
+		full_path[i++] = *name++;
+	if (i < PATH_MAX)
+		full_path[i] = '\0';
+	else
+		errno = ENAMETOOLONG;
+	return ((i < PATH_MAX) ? 1 : 0);
 }
 
-void    append_file(t_file **files, t_file *file)
-{
-	t_file *head;
+/*
+** file structure
+*/
 
-	if (!*files)
+static t_file	*new_file(char path[PATH_MAX], char *name, t_stat *stat)
+{
+	t_file	*new;
+
+	if (!(new = (t_file*)ft_memalloc(sizeof(t_file)))
+	|| (!(new->name = ft_strdup(name))))
+		ls_error(NULL, 2);
+	new->mode = stat->st_mode;
+	new->st_nlink = stat->st_nlink;
+	new->st_uid = stat->st_uid;
+	new->st_gid = stat->st_gid;
+	new->size = stat->st_size;
+	new->st_rdev = stat->st_rdev;
+	new->time = stat->st_mtimespec.tv_sec;
+	new->ntime = stat->st_mtimespec.tv_nsec;
+	new->st_blocks = stat->st_blocks;
+	get_full_path(path, name, new->full_path);
+	new->next = NULL;
+	return (new);
+}
+
+/*
+** adds a new file in the list or create a liste if it didn't exist'
+*/
+
+int				add_new_file(char path[PATH_MAX], char *name, t_file **lst)
+{
+	char		full_path[PATH_MAX];
+	t_stat		stat;
+
+	if (!(get_full_path(path, name, full_path)))
 	{
-		*files = file;
-		return ;
+		ls_error(name, 1);
+		return (-1);
 	}
-	head = *files;
-	while (head->next)
-		head = head->next;
-	head->next = file;
-}
-
-void    init_files(char *name, t_file **files)
-{
-    DIR *dir;
-    t_dirent *ent;
-    t_stat s;
-    t_file *file;
-
-    if (dir = opendir(name))
-    {
-        while (ent = readdir(dir))
-        {
-           if (lstat(ft_strjoin(name, ent->d_name), &s) != -1)
-           {
-               file = create_file(ent->d_name, ent->d_name, &s);
-               append_file(files, file);
-           }
-        }
-        closedir(dir);
-    } 
-    else 
-        ft_puterror("Error");
+	if (lstat(full_path, &stat) == -1)
+		return (-1);
+	if (!*lst)
+		*lst = new_file(path, name, &stat);
+	else
+	{
+		while ((*lst)->next)
+			lst = &((*lst)->next);
+		(*lst)->next = new_file(path, name, &stat);
+	}
+	return (1);
 }

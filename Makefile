@@ -1,45 +1,48 @@
-DIR_SRC			= ./src/
-DIR_INC			= ./includes/
-DIR_LIB			= ./libft/
-DIR_OBJ 		= ./obj/
+NAME = ft_ls
 
-FILE_LS		= \
-			  ft_ls \
-			  add_new_file \
-			  display \
-			  parse \
-			  sorting
+### PATH ###
+SRCS_PATH = src/
+OBJ_PATH  = obj/
+LIBFT_PATH = libft/
 
-SRC_LS 	= $(addprefix $(DIR_SRC), $(addsuffix .c, $(FILE_LS)))
-OBJ_LS 	= $(addprefix $(DIR_OBJ), $(addsuffix .o, $(FILE_LS)))
+FLAGS = -Wall -Werror -Wextra
+INC = -I ./includes/ -I ./$(LIBFT_PATH)includes/
 
-CC 	   			= gcc
-FT_LS 			= ft_ls
-#CFLAGS 	   		= -Wall -Werror -Wextra -O2 -I$(DIR_INC) -I$(DIR_LIB)$(DIR_INC)
-CFLAGS 	   		= -O2 -I$(DIR_INC) -I$(DIR_LIB)$(DIR_INC)
+SRCS_NAME = main.c \
+			parsing.c \
+			add_new_file.c \
+			sort_list.c \
+			display_all.c\
+			display_list.c \
+			display_detailed_list.c \
+			display_list_items.c \
+			misc.c \
 
-all: ft_ls
+SRCS = $(addprefix $(SRCS_PATH), $(SRCS_NAME))
+OBJ = $(addprefix $(OBJ_PATH), $(SRCS_NAME:.c=.o))
 
-lib:
-	@make -C $(DIR_LIB)
+all: $(NAME)
 
-$(DIR_OBJ):
-	@mkdir -p $(DIR_OBJ)
+$(NAME): $(OBJ)
+	@make -C $(LIBFT_PATH)
+	@gcc $(FLAGS) $(OBJ) $(INC) -L $(LIBFT_PATH) -lft -o $(NAME)
+	@echo "\033[32mBinary \033[1;32m$(NAME)\033[1;0m\033[32m created.\033[0m"
 
-$(DIR_OBJ)%.o: $(DIR_SRC)%.c
-	@$(CC) $(CFLAGS) -c $< -o $@
-
-ft_ls: $(DIR_OBJ) $(OBJ_LS) lib
-	@$(CC) $(CFLAGS) -o $(FT_LS) $(OBJ_LS) $(DIR_LIB)libft.a
+$(OBJ_PATH)%.o: $(SRCS_PATH)%.c
+	@mkdir -p obj
+	@gcc -c $(FLAGS) $(INC) $< -o $@
+	@echo "\033[34m\033[1mCompilation of \033[0m\033[36m$(notdir $<)\033[1m\033[34m done.\033[0m"
 
 clean:
-	@make clean -C $(DIR_LIB)
-	@rm -rf $(DIR_OBJ)
+	@make -C $(LIBFT_PATH)/ clean
+	@/bin/rm -rf $(OBJ_PATH)
+	@echo "\033[31mObjects files \033[1;31m$(OBJS_LIST)\033[1;0m\033[31m removed.\033[0m"
 
 fclean: clean
-	@make fclean -C $(DIR_LIB)
-	@rm -f $(FT_LS)
+	@make -C $(LIBFT_PATH)/ fclean
+	@/bin/rm -rf $(NAME)
+	@echo "\033[31mBin \033[1;31m$(NAME)\033[1;0m\033[31m removed.\033[0m"
 
 re: fclean all
 
-.PHONY: all clean fclean re
+.PHONY: all, clean, fclean, re
