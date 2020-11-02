@@ -14,6 +14,7 @@
 # define FT_LS_H
 
 # include "libft.h"
+#include "list.h"
 
 /*
 ** ioctl is to get the terminal width
@@ -30,6 +31,7 @@
 # include <sys/xattr.h>
 # include <limits.h>
 # include <sys/ioctl.h>
+# include <errno.h>
 
 enum	{ERRNO, USAGE, MALL_ERR};
 
