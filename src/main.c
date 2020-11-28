@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.c                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: angavrel <angavrel@student.42.fr>          +#+  +:+       +#+        */
+/*   By: lcarmelo <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2017/02/19 13:18:18 by angavrel          #+#    #+#             */
-/*   Updated: 2017/02/22 04:11:28 by angavrel         ###   ########.fr       */
+/*   Created: 2020/11/28 13:21:43 by lcarmelo          #+#    #+#             */
+/*   Updated: 2020/11/28 13:21:44 by lcarmelo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,11 +26,6 @@ t_file	*init_files_list(char **names_list, int ac, int first)
 			ls_error(names_list[i], ERRNO);
 	return (begin);
 }
-
-/*
-** main program http://man7.org/linux/man-pages/man1/ls.1.html
-** check parsing.c for function parsing
-*/
 
 int		main(int ac, char **av)
 {
